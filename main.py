@@ -48,11 +48,13 @@ async def shutdown():
 
 
 @app.get("/")
+@app.get("/index")
+@app.get("/threads")
 async def get_threads(request: Request) -> HTMLResponse:
     new_form = CreatePoastForm()
     new_form.reply_to.data = 'Nobody'
 
-    query = poasts.select()
+    query = poasts.select().where(poasts.c.reply_to == None)
     results = await database.fetch_all(query=query)
 
     return templates.TemplateResponse(
@@ -73,6 +75,8 @@ async def redirect_to_index() -> RedirectResponse:
 async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[str, Form()], request: Request) -> RedirectResponse:
     print(request)
     # insert the poast into the database
+    if reply_to == 'Nobody':
+        reply_to = None
     query = poasts.insert().values(text=poast_text, reply_to=reply_to)
     await database.execute(query=query)
     return RedirectResponse(url="/", status_code=303)
@@ -80,17 +84,20 @@ async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[s
 
 @app.get("/poast/{poast_id}")
 async def get_poast(poast_id: int, request: Request) -> HTMLResponse:
+    # Get Poast and Replyguys
     poast_query = poasts.select().where(poasts.c.id == poast_id)
     replies_query = poasts.select().where(poasts.c.reply_to == poast_id)
     the_poast = await database.fetch_one(query=poast_query)
     the_replies = await database.fetch_all(query=replies_query)
-    print(the_poast)
-    print(the_replies)
+    # Prep form for new replyguy
+    reply_form = CreatePoastForm()
+    reply_form.reply_to.data = poast_id
     return templates.TemplateResponse(
         "thread.html",
         {
             "request": request,
             "poast": the_poast,
             "replies": the_replies,
+            "form": reply_form,
         },
     )

@@ -6,4 +6,14 @@
 {% for reply in replies %}
     <p>{{ reply.id }} - {{ reply.text }}</p>
 {% endfor %}
+<h2>Reply Guy</h2>
+<form action="/poast" method="post">
+    {{ form.csrf_token }}
+    {{ form.reply_to }}
+    <p>{{ form.poast_text.label }}</p>
+    {{ form.poast_text() }}
+    {{ form.reply_to }}
+    <br>
+    {{ form.submit() }}
+</form>
 {% endblock %}
