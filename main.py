@@ -1,12 +1,13 @@
 import os
+from typing import Annotated, Optional
 
 import databases
 import sqlalchemy
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 # DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
 # database = databases.Database(DATABASE_URL)
@@ -39,8 +40,10 @@ templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
+
 @app.get("/index")
-async def index(request: Request) -> HTMLResponse:
+@app.get("/threads")
+async def get_threads(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         "index.html", 
         {
@@ -49,8 +52,21 @@ async def index(request: Request) -> HTMLResponse:
         }
     )
 
+@app.post("/poast")
+async def create_poast(text: Annotated[str, Form()], reply_to: Optional[Annotated[int, Form()]], request: Request) -> RedirectResponse:
+    poast_id = len(database["poasts"])
+    new_poast= {
+        "id": poast_id,
+        "text": text,
+        "reply_to": reply_to,
+        "author_ip": request.client
+    }
+    database["poasts"][poast_id] = new_poast
+    return RedirectResponse(url=f"/poast/{poast_id}")
+
+
 @app.get("/poast/{poast_id}")
-async def poast(request: Request, poast_id: int) -> HTMLResponse:
+async def get_poast(request: Request, poast_id: int) -> HTMLResponse:
     poasts = []
     poasts.append(database["poasts"].get(poast_id, None))
     for _, poast in database["poasts"].items():
