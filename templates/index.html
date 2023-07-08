@@ -1,11 +1,8 @@
-<html>
-    <head>
-        <title>Poaster</title>
-    </head>
-    <body>
-        <h1>Poaster</h1>
-        {% for poast in poasts %}
-        <p>{{ poast }}</p>
-        {% endfor %}
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dunderchan</h1>
+{% for poast in poasts %}
+    <p>{{ poast }}</p>
+{% endfor %}
+{% endblock %}
