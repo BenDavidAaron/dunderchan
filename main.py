@@ -29,7 +29,7 @@ metadata.create_all(engine)
 templates = Jinja2Templates(directory="templates")
 
 class CreatePoastForm(wtforms.Form):
-    poast_text = wtforms.StringField("text", [wtforms.validators.DataRequired()])
+    poast_text = wtforms.TextAreaField("text", [wtforms.validators.DataRequired()])
     reply_to = wtforms.HiddenField("reply_to")
     submit = wtforms.SubmitField("Submit")
 
