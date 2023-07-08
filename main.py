@@ -1,5 +1,6 @@
 import os
 from typing import Annotated, Optional
+import wtforms
 
 import databases
 import sqlalchemy
@@ -38,44 +39,37 @@ database = {
 
 templates = Jinja2Templates(directory="templates")
 
+class CreatePoastForm(wtforms.Form):
+    poast_text = wtforms.StringField("text", [wtforms.validators.DataRequired()])
+    reply_to = wtforms.HiddenField("reply_to")
+    submit = wtforms.SubmitField("Submit")
+
 app = FastAPI()
 
 
+@app.get("/")
 @app.get("/index")
-@app.get("/threads")
 async def get_threads(request: Request) -> HTMLResponse:
+    new_form = CreatePoastForm()
+    new_form.reply_to.data = 'Nobody'
     return templates.TemplateResponse(
         "index.html", 
         {
             "request": request,
-            "poasts": [_ for _  in database["poasts"].values()]
+            "poasts": [_ for _  in database["poasts"].values()],
+            "form": new_form,
         }
     )
 
 @app.post("/poast")
-async def create_poast(text: Annotated[str, Form()], reply_to: Optional[Annotated[int, Form()]], request: Request) -> RedirectResponse:
+async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[str, Form()], request: Request) -> RedirectResponse:
+    print(request)
     poast_id = len(database["poasts"])
     new_poast= {
         "id": poast_id,
-        "text": text,
+        "text": poast_text,
         "reply_to": reply_to,
         "author_ip": request.client
     }
     database["poasts"][poast_id] = new_poast
-    return RedirectResponse(url=f"/poast/{poast_id}")
-
-
-@app.get("/poast/{poast_id}")
-async def get_poast(request: Request, poast_id: int) -> HTMLResponse:
-    poasts = []
-    poasts.append(database["poasts"].get(poast_id, None))
-    for _, poast in database["poasts"].items():
-        if poast["reply_to"] == poast_id:
-            poasts.append(poast)
-    return templates.TemplateResponse(
-        "index.html", 
-        {
-            "request": request, 
-            "poasts": poasts
-        }
-    )
+    return RedirectResponse(url="/", status_code=303)
