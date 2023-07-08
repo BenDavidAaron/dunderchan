@@ -5,7 +5,11 @@
 <p>Which way Western Man?</p>
 <h2>Fresh Poast</h2>
 {% for poast in poasts %}
-    <p>{{ poast }}</p>
+    <p>{{ poast.text }}</p>
+    <p>{{poast.id}}. <a href="/poast/{{ poast.id }}">view</a></p>
+    {% if not loop.last %}
+    <hr>
+    {% endif %}
 {% endfor %}
 <h2>Poaster</h2>
 <form action="/poast" method="post">

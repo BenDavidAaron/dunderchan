@@ -58,7 +58,6 @@ async def shutdown():
 
 
 @app.get("/")
-@app.get("/")
 async def get_threads(request: Request) -> HTMLResponse:
     new_form = CreatePoastForm()
     new_form.reply_to.data = 'Nobody'
@@ -75,6 +74,11 @@ async def get_threads(request: Request) -> HTMLResponse:
         }
     )
 
+@app.get("/poast")
+async def redirect_to_index() -> RedirectResponse:
+    return RedirectResponse(url="/", status_code=303)
+
+
 @app.post("/poast")
 async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[str, Form()], request: Request) -> RedirectResponse:
     print(request)
@@ -83,6 +87,7 @@ async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[s
     await database.execute(query=query)
     return RedirectResponse(url="/", status_code=303)
 
-@app.get("/poast")
-async def redirect_to_index() -> RedirectResponse:
-    return RedirectResponse(url="/", status_code=303)
+
+@app.get("/poast/{poast_id}")
+async def get_poast(poast_id: int, request: Request) -> HTMLResponse:
+    return f"Poast {poast_id}"
