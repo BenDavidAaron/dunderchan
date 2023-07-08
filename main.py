@@ -30,7 +30,6 @@ poasts = sqlalchemy.Table(
     metadata,
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
-    sqlalchemy.Column("author_ip", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
 )
 engine = sqlalchemy.create_engine(
@@ -59,7 +58,7 @@ async def shutdown():
 
 
 @app.get("/")
-@app.get("/index")
+@app.get("/")
 async def get_threads(request: Request) -> HTMLResponse:
     new_form = CreatePoastForm()
     new_form.reply_to.data = 'Nobody'
@@ -79,12 +78,11 @@ async def get_threads(request: Request) -> HTMLResponse:
 @app.post("/poast")
 async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[str, Form()], request: Request) -> RedirectResponse:
     print(request)
-    poast_id = len(database["poasts"])
-    new_poast= {
-        "id": poast_id,
-        "text": poast_text,
-        "reply_to": reply_to,
-        "author_ip": request.client
-    }
-    database["poasts"][poast_id] = new_poast
+    # insert the poast into the database
+    query = poasts.insert().values(text=poast_text, reply_to=reply_to)
+    await database.execute(query=query)
+    return RedirectResponse(url="/", status_code=303)
+
+@app.get("/poast")
+async def redirect_to_index() -> RedirectResponse:
     return RedirectResponse(url="/", status_code=303)
