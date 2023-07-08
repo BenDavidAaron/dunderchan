@@ -1,65 +1,104 @@
 import os
+from typing import Annotated, Optional
+import wtforms
 
 import databases
 import sqlalchemy
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-# DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
-# database = databases.Database(DATABASE_URL)
-# metadata = sqlalchemy.MetaData()
-# poasts = sqlalchemy.Table(
-#     "poasts",
-#     metadata,
-#     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-#     sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
-#     sqlalchemy.Column("author_ip", sqlalchemy.String, nullable=False),
-#     sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
-# )
-# engine = sqlalchemy.create_engine(
-#     DATABASE_URL, connect_args={"check_same_thread": False}
-# )
-# metadata.create_all(engine)
+DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+engine = sqlalchemy.create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
 
-database = {
-    "poasts": {
-        0: {"id": 0, "text": "test", "author_ip": "127.0.0.1", "reply_to": None},
-        1: {"id": 1, "text": "testosterone", "author_ip": "127.0.0.1", "reply_to": 0},
-        2: {"id": 2, "text": "bonk", "author_ip": "127.0.0.1", "reply_to": None},
-        3: {"id": 3, "text": "donk", "author_ip": "127.0.0.1", "reply_to": 2},
-        4: {"id": 4, "text": "exam", "author_ip": "127.0.0.1", "reply_to": 0},
-        5: {"id": 5, "text": "test again", "author_ip": "127.0.0.1", "reply_to": None}
-    }
-}
+poasts = sqlalchemy.Table(
+    "poasts",
+    metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
+)
+
+metadata.create_all(engine)
 
 templates = Jinja2Templates(directory="templates")
 
+class CreatePoastForm(wtforms.Form):
+    poast_text = wtforms.TextAreaField("text", [wtforms.validators.DataRequired()])
+    reply_to = wtforms.HiddenField("reply_to")
+    submit = wtforms.SubmitField("Submit")
+
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
+
+
+@app.get("/")
 @app.get("/index")
-async def index(request: Request) -> HTMLResponse:
+@app.get("/threads")
+async def get_threads(request: Request) -> HTMLResponse:
+    new_form = CreatePoastForm()
+    new_form.reply_to.data = 'Nobody'
+
+    query = poasts.select().where(poasts.c.reply_to == None)
+    results = await database.fetch_all(query=query)
+
     return templates.TemplateResponse(
         "index.html", 
         {
             "request": request,
-            "poasts": [_ for _  in database["poasts"].values()]
+            "poasts": results,
+            "form": new_form,
         }
     )
 
+@app.get("/poast")
+async def redirect_to_index() -> RedirectResponse:
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/poast")
+async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[str, Form()], request: Request) -> RedirectResponse:
+    print(request)
+    # insert the poast into the database
+    if reply_to == 'Nobody':
+        reply_to = None
+    query = poasts.insert().values(text=poast_text, reply_to=reply_to)
+    await database.execute(query=query)
+    return RedirectResponse(url="/", status_code=303)
+
+
 @app.get("/poast/{poast_id}")
-async def poast(request: Request, poast_id: int) -> HTMLResponse:
-    poasts = []
-    poasts.append(database["poasts"].get(poast_id, None))
-    for _, poast in database["poasts"].items():
-        if poast["reply_to"] == poast_id:
-            poasts.append(poast)
+async def get_poast(poast_id: int, request: Request) -> HTMLResponse:
+    # Get Poast and Replyguys
+    poast_query = poasts.select().where(poasts.c.id == poast_id)
+    replies_query = poasts.select().where(poasts.c.reply_to == poast_id)
+    the_poast = await database.fetch_one(query=poast_query)
+    the_replies = await database.fetch_all(query=replies_query)
+    # Prep form for new replyguy
+    reply_form = CreatePoastForm()
+    reply_form.reply_to.data = poast_id
     return templates.TemplateResponse(
-        "index.html", 
+        "thread.html",
         {
-            "request": request, 
-            "poasts": poasts
-        }
+            "request": request,
+            "poast": the_poast,
+            "replies": the_replies,
+            "form": reply_form,
+        },
     )
