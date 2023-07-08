@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Poast: {{ poast.id }}</h1>
+<p>{{ poast.text }}</p>
+{% for reply in replies %}
+    <p>{{ reply.id }} - {{ reply.text }}</p>
+{% endfor %}
+{% endblock %}

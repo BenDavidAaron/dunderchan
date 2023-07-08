@@ -11,20 +11,12 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
-
-database = {
-    "poasts": {
-        0: {"id": 0, "text": "test", "author_ip": "127.0.0.1", "reply_to": None},
-        1: {"id": 1, "text": "testosterone", "author_ip": "127.0.0.1", "reply_to": 0},
-        2: {"id": 2, "text": "bonk", "author_ip": "127.0.0.1", "reply_to": None},
-        3: {"id": 3, "text": "donk", "author_ip": "127.0.0.1", "reply_to": 2},
-        4: {"id": 4, "text": "exam", "author_ip": "127.0.0.1", "reply_to": 0},
-        5: {"id": 5, "text": "test again", "author_ip": "127.0.0.1", "reply_to": None}
-    }
-}
-
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
+engine = sqlalchemy.create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
+
 poasts = sqlalchemy.Table(
     "poasts",
     metadata,
@@ -32,9 +24,7 @@ poasts = sqlalchemy.Table(
     sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
 )
-engine = sqlalchemy.create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+
 metadata.create_all(engine)
 
 templates = Jinja2Templates(directory="templates")
@@ -90,4 +80,17 @@ async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[s
 
 @app.get("/poast/{poast_id}")
 async def get_poast(poast_id: int, request: Request) -> HTMLResponse:
-    return f"Poast {poast_id}"
+    poast_query = poasts.select().where(poasts.c.id == poast_id)
+    replies_query = poasts.select().where(poasts.c.reply_to == poast_id)
+    the_poast = await database.fetch_one(query=poast_query)
+    the_replies = await database.fetch_all(query=replies_query)
+    print(the_poast)
+    print(the_replies)
+    return templates.TemplateResponse(
+        "thread.html",
+        {
+            "request": request,
+            "poast": the_poast,
+            "replies": the_replies,
+        },
+    )
