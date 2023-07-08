@@ -19,7 +19,7 @@ engine = sqlalchemy.create_engine(
 poasts = sqlalchemy.Table(
     "poasts",
     metadata,
-    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, autoincrement=True),
     sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
 )
@@ -55,7 +55,7 @@ async def get_threads(request: Request) -> HTMLResponse:
     new_form = CreatePoastForm()
     new_form.reply_to.data = 'Nobody'
 
-    query = poasts.select().where(poasts.c.reply_to == None)
+    query = poasts.select().where(poasts.c.reply_to == None).order_by(poasts.c.id.desc())
     results = await database.fetch_all(query=query)
 
     return templates.TemplateResponse(
@@ -87,7 +87,7 @@ async def create_poast(poast_text: Annotated[str, Form()], reply_to: Annotated[s
 async def get_poast(poast_id: int, request: Request) -> HTMLResponse:
     # Get Poast and Replyguys
     poast_query = poasts.select().where(poasts.c.id == poast_id)
-    replies_query = poasts.select().where(poasts.c.reply_to == poast_id)
+    replies_query = poasts.select().where(poasts.c.reply_to == poast_id).order_by(poasts.c.id.desc())
     the_poast = await database.fetch_one(query=poast_query)
     the_replies = await database.fetch_all(query=replies_query)
     # Prep form for new replyguy
