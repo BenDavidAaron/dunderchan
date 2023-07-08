@@ -10,21 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-# DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
-# database = databases.Database(DATABASE_URL)
-# metadata = sqlalchemy.MetaData()
-# poasts = sqlalchemy.Table(
-#     "poasts",
-#     metadata,
-#     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-#     sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
-#     sqlalchemy.Column("author_ip", sqlalchemy.String, nullable=False),
-#     sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
-# )
-# engine = sqlalchemy.create_engine(
-#     DATABASE_URL, connect_args={"check_same_thread": False}
-# )
-# metadata.create_all(engine)
+DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
 
 database = {
     "poasts": {
@@ -37,6 +23,21 @@ database = {
     }
 }
 
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+poasts = sqlalchemy.Table(
+    "poasts",
+    metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("author_ip", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
+)
+engine = sqlalchemy.create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
+metadata.create_all(engine)
+
 templates = Jinja2Templates(directory="templates")
 
 class CreatePoastForm(wtforms.Form):
@@ -47,16 +48,30 @@ class CreatePoastForm(wtforms.Form):
 app = FastAPI()
 
 
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
+
+
 @app.get("/")
 @app.get("/index")
 async def get_threads(request: Request) -> HTMLResponse:
     new_form = CreatePoastForm()
     new_form.reply_to.data = 'Nobody'
+
+    query = poasts.select()
+    results = await database.fetch_all(query=query)
+
     return templates.TemplateResponse(
         "index.html", 
         {
             "request": request,
-            "poasts": [_ for _  in database["poasts"].values()],
+            "poasts": results,
             "form": new_form,
         }
     )
