@@ -1,5 +1,5 @@
 body {
-    background: #21242b url(/image/fade-blue.png) top center repeat-x;
+    background: #21242b; 
     color: #cdcdcd;
     font-family: helvetica, sans-serif;
     font-size: 10pt;
@@ -12,4 +12,9 @@ body {
 
 a {
     color: #9e76c6;;
+}
+
+input, textarea, select {
+    color: #cdcdcd;
+    background-color: #342b39;
 }
