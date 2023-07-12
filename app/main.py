@@ -1,30 +1,12 @@
-import os
-from typing import Annotated, Optional
+from typing import Annotated
 import wtforms
 
-import databases
-import sqlalchemy
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-DATABASE_URL = os.environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-engine = sqlalchemy.create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-
-poasts = sqlalchemy.Table(
-    "poasts",
-    metadata,
-    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, autoincrement=True),
-    sqlalchemy.Column("text", sqlalchemy.String, nullable=False),
-    sqlalchemy.Column("reply_to", sqlalchemy.Integer, nullable=True),
-)
-
-metadata.create_all(engine)
+from app.models import database, poasts
 
 templates = Jinja2Templates(directory="templates")
 
@@ -34,9 +16,7 @@ class CreatePoastForm(wtforms.Form):
     submit = wtforms.SubmitField("Submit")
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 
 @app.on_event("startup")
 async def startup():
