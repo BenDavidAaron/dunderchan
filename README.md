@@ -1,2 +1,0 @@
-# dunderchan
-imageboard prototype
