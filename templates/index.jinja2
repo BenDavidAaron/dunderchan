@@ -1,12 +1,12 @@
-{% extends "base.html" %}
+{% extends "base.jinja2" %}
 
 {% block content %}
 <h1>Dunderchan</h1>
-<p>Which way Western Man?</p>
+<p>{{ motd }}</p>
 <h2>View Content</h2>
-{% for poast in poasts %}
-    <p>{{poast.id}}. {{ poast.text }}</p>
-    <p><a href="/poast/{{ poast.id }}">View Replies</a></p>
+{% for thread in recent_threads %}
+    <p>{{thread.id}}. {{ thread.text }}</p>
+    <p><a href="/poast/{{ thread.id }}">View Replies</a></p>
     {% if not loop.last %}
     <div>
     {% endif %}
