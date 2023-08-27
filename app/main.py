@@ -1,13 +1,15 @@
 """Dumbapp"""
+import hashlib
 from os import environ
 from pathlib import Path
+from typing import Optional
 
 import sqlalchemy
 from databases import Database
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from fastapi_htmx import htmx, htmx_init
 
 app = FastAPI()
@@ -26,11 +28,19 @@ posts = sqlalchemy.Table(
     metadata,
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, autoincrement=True),
     sqlalchemy.Column("title", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("author_hash", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("content", sqlalchemy.String, nullable=False),
 )
 
 metadata.create_all(engine)
 
+
+def hash_author_id(author_id: str) -> str:
+    """Hash author id for display"""
+    hash_fxn = hashlib.md5()
+    hash_fxn.update(author_id.encode("utf-8"))
+    hash_value = hash_fxn.hexdigest()
+    return hash_value[:6]
 
 @app.on_event("startup")
 async def startup():
@@ -62,13 +72,21 @@ async def get_posts(request: Request):
 @app.post("/posts", response_class=HTMLResponse)
 @htmx("posts", "posts")
 async def create_post(
-    request: Request, title: str = Form(...), content: str = Form(...)
+    request: Request,
+    title: str = Form(...),
+    content: str = Form(...),
+    author: Optional[str] = Form(None),
 ):
     """Create a new post"""
-    del request
+    if author is not None:
+        author_hash = hash_author_id(author)
+    else:
+        author_hash = hash_author_id(request.client.host)
+
     insert_statement = posts.insert().values(
         title=title,
         content=content,
+        author_hash=author_hash,
     )
     await database.execute(insert_statement)
     query_statement = posts.select().order_by(posts.c.id.desc()).limit(10)

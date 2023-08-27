@@ -2,6 +2,7 @@
     {% for post in posts %}
         <p>
         {{ post.id }} - {{ post.title }}</br>
+        {{post.author_hash}}</br>
         {{ post.content }}
         </p>
     {% endfor %}
