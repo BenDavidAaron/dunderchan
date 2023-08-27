@@ -6,13 +6,13 @@
 <body>
     <h1>{{ greeting }}</h1>
     <button
-        hx-get="/customers"
+        hx-get="/posts"
         hx-swap="innerHTML"
-        hx-target="#customers_list"
+        hx-target="#posts_list"
     >
-        Load Data
+        Refresh Poasts
     </button>
-    <div id="customers_list"></div>
+    <div id="posts_list"></div>
     <script src="https://unpkg.com/htmx.org@1.8.5"></script>
 </body>
 </html>

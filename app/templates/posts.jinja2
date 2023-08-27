@@ -1,0 +1,8 @@
+<div class=post-list>
+    {% for post in posts %}
+        <p>
+        {{ post["id"] }} - {{ post["title"] }}</br>
+        {{ post.body }}
+        </p>
+    {% endfor %}
+</div>
