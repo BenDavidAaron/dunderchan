@@ -7,9 +7,11 @@ from databases import Database
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi_htmx import htmx, htmx_init
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 htmx_init(templates=Jinja2Templates(directory=Path("app") / "templates"))
 
 DATABASE_URL = environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
