@@ -57,7 +57,9 @@ async def shutdown():
 @htmx("index", "index")
 async def root_page(request: Request):
     """Root page"""
-    return {"greeting": "Dunderchan"}
+    random_post = await database.fetch_one(posts.select().order_by(sqlalchemy.func.random()).limit(1))
+    motd = random_post.title
+    return {"greeting": motd}
 
 
 @app.get("/posts", response_class=HTMLResponse)
