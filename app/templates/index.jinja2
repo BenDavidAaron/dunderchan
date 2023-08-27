@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Hello FastAPI-HTMX</title>
 </head>
+
 <body>
     <h1>{{ greeting }}</h1>
-    <button
-        hx-get="/posts"
-        hx-swap="innerHTML"
-        hx-target="#posts_list"
-    >
+    <form hx-post="/posts" hx-target="#posts_list">
+        <input type="text" id="title" name="title" placeholder="Title" required>
+        <button type="submit">Submit Post</button>
+        </br>
+        <textarea type="text" id="content" name="content" placeholder="Content" rows="5", cols="30" required></textarea>
+    </form>
+    <button hx-get="/posts" hx-swap="innerHTML" hx-target="#posts_list">
         Refresh Poasts
     </button>
     <div id="posts_list"></div>
     <script src="https://unpkg.com/htmx.org@1.8.5"></script>
 </body>
+
 </html>

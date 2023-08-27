@@ -1,8 +1,8 @@
 <div class=post-list>
     {% for post in posts %}
         <p>
-        {{ post["id"] }} - {{ post["title"] }}</br>
-        {{ post.body }}
+        {{ post.id }} - {{ post.title }}</br>
+        {{ post.content }}
         </p>
     {% endfor %}
 </div>
