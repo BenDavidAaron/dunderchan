@@ -45,7 +45,7 @@ async def shutdown():
 @htmx("index", "index")
 async def root_page(request: Request):
     """Root page"""
-    return {"greeting": "Hello World"}
+    return {"greeting": "Dunderchan"}
 
 
 class PostCreateSchema(BaseModel):
@@ -81,3 +81,12 @@ async def create_post(
     query_statement = posts.select().order_by(posts.c.id.desc()).limit(10)
     posts_list = await database.fetch_all(query_statement)
     return {"posts": posts_list}
+
+@app.get("/thread/{id}", response_class=HTMLResponse)
+@htmx("thread", "thread")
+async def get_thread(request: Request, id: int):
+    """Get thread"""
+    op_query = posts.select().where(posts.c.id == id)
+    op = await database.fetch_one(op_query)
+    print(op)
+    return {"op": op}
