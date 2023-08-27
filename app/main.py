@@ -42,6 +42,7 @@ def hash_author_id(author_id: str) -> str:
     hash_value = hash_fxn.hexdigest()
     return hash_value[:6]
 
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
