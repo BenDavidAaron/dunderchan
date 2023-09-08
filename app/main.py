@@ -16,7 +16,7 @@ from fastapi_socketio import SocketManager
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 htmx_init(templates=Jinja2Templates(directory=Path("app") / "templates"))
-socket_manager = SocketManager(app)
+socket_manager = SocketManager(app=app)
 
 DATABASE_URL = environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
 database = Database(DATABASE_URL)
