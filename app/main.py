@@ -58,7 +58,10 @@ async def shutdown():
 async def root_page(request: Request):
     """Root page"""
     random_post = await database.fetch_one(posts.select().order_by(sqlalchemy.func.random()).limit(1))
-    motd = random_post.title
+    try:
+        motd = random_post.title
+    except Exception as exc:
+        motd = str(exc)
     return {"greeting": motd}
 
 
