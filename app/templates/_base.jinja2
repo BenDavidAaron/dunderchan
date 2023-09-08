@@ -4,7 +4,7 @@
 <head>
     <title>Dunderchan</title>
     <script src="https://unpkg.com/htmx.org@1.8.5"></script>
-    <link rel="shortcut icon" type="image/jpg" href="/static/favicon.ico"/>
+    <link rel="shortcut icon" type="image/jpg" href="/static/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="/static/styles.css">
 </head>
 
@@ -12,6 +12,25 @@
     {% block content %}
     {% endblock %}
     <script src="https://unpkg.com/htmx.org@1.8.5"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+        integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+        crossorigin="anonymous"></script>
+    <script>
+        var socket = io.connect('http://localhost:53307'); // Replace with your server address and port
+
+        socket.on('new_post', function (data) {
+            // Code to update your post list
+            console.log('Received a new post:', data);
+
+            // For example, appending the new post to a list
+            var postList = document.getElementByClass('post-list'); // Replace with your post list element ID
+            var newPost = document.createElement('p');
+
+            newPost.innerHTML = `<b>${data.id} - ${data.author_hash} : ${data.title}</b></br>${data.content}`;
+            postList.appendChild(newPost);
+        });
+    </script>
 </body>
 
 </html>

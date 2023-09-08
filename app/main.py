@@ -3,7 +3,6 @@ import hashlib
 from os import environ
 from pathlib import Path
 from typing import Optional
-import socketio
 
 import sqlalchemy
 from databases import Database
@@ -12,13 +11,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_htmx import htmx, htmx_init
+from fastapi_socketio import SocketManager
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 htmx_init(templates=Jinja2Templates(directory=Path("app") / "templates"))
-
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
-socket_app = socketio.ASGIApp(sio)
+socket_manager = SocketManager(app)
 
 DATABASE_URL = environ.get("DUNDERCHAN_SQL_URL", "sqlite:///./test.db")
 database = Database(DATABASE_URL)
@@ -57,11 +55,23 @@ async def shutdown():
     await database.disconnect()
 
 
+@app.sio.on("connect")
+def connect(sid, environ):
+    print("connect ", sid)
+
+
+@app.sio.on("disconnect")
+def disconnect(sid):
+    print("disconnect ", sid)
+
+
 @app.get("/", response_class=HTMLResponse)
 @htmx("index", "index")
 async def root_page(request: Request):
     """Root page"""
-    random_post = await database.fetch_one(posts.select().order_by(sqlalchemy.func.random()).limit(1))
+    random_post = await database.fetch_one(
+        posts.select().order_by(sqlalchemy.func.random()).limit(1)
+    )
     try:
         motd = random_post.title
     except Exception as exc:
@@ -93,15 +103,26 @@ async def create_post(
     else:
         author_hash = hash_author_id(request.client.host)
 
-    insert_statement = posts.insert().values(
-        title=title,
-        content=content,
-        author_hash=author_hash,
-    )
-    await database.execute(insert_statement)
+    async with database.transaction():
+        insert_statement = posts.insert().values(
+            title=title,
+            content=content,
+            author_hash=author_hash,
+        )
+        await database.execute(insert_statement)
+        row = await database.fetch_one("SELECT last_insert_rowid() as id")
+        new_post_id = row["id"]
 
     # Broadcast the new poast
-    await sio.emit("new_post", {"title": title, "content": content, "author_hash": author_hash})
+    await app.sio.emit(
+        "new_post",
+        {
+            "id": new_post_id,
+            "title": title,
+            "content": content,
+            "author_hash": author_hash,
+        },
+    )
 
     query_statement = posts.select().order_by(posts.c.id.desc()).limit(10)
     posts_list = await database.fetch_all(query_statement)
