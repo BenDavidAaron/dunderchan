@@ -12,8 +12,17 @@
     </br>
     <textarea type="text" id="content" name="content" placeholder="Content" rows="5" , cols="30" required></textarea>
 </form>
-<button hx-get="/posts" hx-swap="innerHTML" hx-target="#posts_list">
+<button id="refreshButton" hx-get="/posts" hx-swap="innerHTML" hx-target="#posts_list">
     Refresh Poasts
 </button>
+<script>
+    function refreshPosts() {
+        // Your HTMX function code here
+        htmx.trigger(document.getElementById("refreshButton"), "click");
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        refreshPosts(); // Call your HTMX function on page load
+    });
+</script>
 <div id="posts_list"></div>
 {% endblock %}
