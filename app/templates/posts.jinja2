@@ -1,8 +1,8 @@
 <div class=post-list>
     {% for post in posts %}
-        <p>
+    <p class="card">
         <b>{{ post.id }} - {{ post.author_hash }} : {{ post.title }}</b></br>
         {{ post.content }}
-        </p>
+    </p>
     {% endfor %}
 </div>
