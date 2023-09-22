@@ -20,15 +20,6 @@
         <button id="refreshButton" hx-get="/posts" hx-swap="innerHTML" hx-target="#posts_list">
             Refresh Poasts
         </button>
-        <script>
-            function refreshPosts() {
-                // Your HTMX function code here
-                htmx.trigger(document.getElementById("refreshButton"), "click");
-            }
-            document.addEventListener("DOMContentLoaded", function () {
-                refreshPosts(); // Call your HTMX function on page load
-            });
-        </script>
     </section>
     <section>
         <div id="posts_list"></div>

@@ -3,7 +3,7 @@
 
 <head>
     <title>Dunderchan</title>
-    <link rel="shortcut icon" type="image/jpg" href="/static/favicon.ico"/>
+    <link rel="shortcut icon" type="image/jpg" href="/static/favicon.ico" />
 </head>
 
 <body>
@@ -11,6 +11,15 @@
     {% endblock %}
     <script src="https://unpkg.com/htmx.org@1.8.5"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script>
+        function refreshPosts() {
+            // Your HTMX function code here
+            htmx.trigger(document.getElementById("refreshButton"), "click");
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            refreshPosts(); // Call your HTMX function on page load
+        });
+    </script>
 </body>
 
 </html>
