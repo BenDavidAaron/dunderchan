@@ -4,7 +4,9 @@
         <div class="card-header">
             {{ post.id }} - {{ post.author_hash }} : {{ post.title }}
         </div>
-        {{ post.content }}
+        <div class="card-content">
+            {{ post.content }}
+        </div>
     </div>
     {% endfor %}
 </div>

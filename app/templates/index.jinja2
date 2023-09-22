@@ -12,16 +12,15 @@
             <label for="author" class="label">Author:</label>
             <input type="text" id="author" class="input" name="author" placeholder="Author" size="28"></br>
             <label for="content" class="label">New Content:</label>
+            <textarea type="text" class="textarea" id="content" name="content" placeholder="Content" rows="5" ,
+                cols="30" required></textarea>
             <button type="submit" class="button" class="submit">Submit Post</button>
-            </br>
-            <textarea type="text" class="textarea" id="content" name="content" placeholder="Content" rows="5" , cols="30"
-                required></textarea>
         </form>
+    </section>
+    <section class="section">
         <button id="refreshButton" class="button" hx-get="/posts" hx-swap="innerHTML" hx-target="#posts_list">
             Refresh Poasts
         </button>
-    </section>
-    <section class="section">
         <div id="posts_list"></div>
     </section>
 </div>
